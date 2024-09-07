@@ -2,6 +2,14 @@ import streamlit as st
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
+import google.generativeai as genai
+from langchain.embeddings import HuggingFaceInstructEmbeddings, OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain.vectorstores import FAISS
+import os
+
+os.getenv("GOOGLE_API_KEY")
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 def extract_pdf_text(pdfs):
     text = ""
@@ -21,6 +29,11 @@ def get_text_chunks(text):
     chunks = text_splitter.split_text(text)
     return chunks
 
+def get_vectorstore(chunks):
+    embeddings = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
+    vector_store = FAISS.from_texts(chunks, embedding=embeddings)
+    vector_store.save_local("faiss_index")
+
 
 def main():
     load_dotenv()
@@ -34,7 +47,8 @@ def main():
         if st.button("Enter"):
             text = extract_pdf_text(pdfs)
             chunk_text = get_text_chunks(text)
-            st.write(chunk_text)
+            #st.write(chunk_text)
+            vectorstore = get_vectorstore(chunk_text)
 
 if __name__ == '__main__':
     main()
