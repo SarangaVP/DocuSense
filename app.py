@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 import google.generativeai as genai
-from langchain.embeddings import HuggingFaceInstructEmbeddings, OpenAIEmbeddings
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.vectorstores import FAISS
 import os
@@ -35,11 +34,12 @@ def get_vectorstore(chunks):
     vector_store.save_local("faiss_index")
 
 
+
 def main():
     load_dotenv()
     st.set_page_config(page_title="Chat with PDFs")
     st.header("Chat with PDFs")
-    st.text_input("Enter your question here:")
+    #st.text_input("Enter your question here:")
 
     with st.sidebar:
         st.subheader("Your files")
