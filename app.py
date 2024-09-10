@@ -5,6 +5,9 @@ from langchain.text_splitter import CharacterTextSplitter
 import google.generativeai as genai
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.vectorstores import FAISS
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.prompts import PromptTemplate
+from langchain.chains.question_answering import load_qa_chain
 import os
 
 os.getenv("GOOGLE_API_KEY")
@@ -33,22 +36,52 @@ def get_vectorstore(chunks):
     vector_store = FAISS.from_texts(chunks, embedding=embeddings)
     vector_store.save_local("faiss_index")
 
+def get_conversation_chain(model_name="gemini-pro", temp=0.4):
+    prompt_template = """
+    Based on the context, provide a detailed answer. Avoid assumptions or incorrect information.
+
+    Context:\n{context}\n
+    Question:\n{question}\n
+
+    Answer:
+    """
+    model = ChatGoogleGenerativeAI(model=model_name, temperature=temp)
+    prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
+    conversation_chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
+
+    return conversation_chain
+
+def process_question(question):
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+    db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization = True)
+    found_text = db.similarity_search(question)
+
+    chain = get_conversation_chain()
+
+    response = chain({"input_documents": found_text, "question": question}, return_only_outputs=True)
+
+    if "output_text" in response:
+        st.write("Reply: ", response["output_text"])
+    else:
+        st.write("Unable to generate a reply from the given context.")
 
 
 def main():
     load_dotenv()
     st.set_page_config(page_title="Chat with PDFs")
     st.header("Chat with PDFs")
-    #st.text_input("Enter your question here:")
+    question = st.text_input("Enter your question here:")
+
+    if question:
+        process_question(question)
 
     with st.sidebar:
         st.subheader("Your files")
         pdfs =st.file_uploader("Upload your PDFs here", accept_multiple_files=True)
         if st.button("Enter"):
             text = extract_pdf_text(pdfs)
-            chunk_text = get_text_chunks(text)
-            #st.write(chunk_text)
-            vectorstore = get_vectorstore(chunk_text)
+            text_chunks = get_text_chunks(text)
+            get_vectorstore(text_chunks)
 
 if __name__ == '__main__':
     main()
