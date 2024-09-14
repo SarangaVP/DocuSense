@@ -60,10 +60,10 @@ def process_question(question):
 
     response = chain({"input_documents": found_text, "question": question}, return_only_outputs=True)
 
-    if "output_text" in response:
+    if "output_text" in response and response["output_text"].strip():
         st.write("Reply: ", response["output_text"])
     else:
-        st.write("Unable to generate a reply from the given context.")
+        st.write("No relevant answer found for the question.")
 
 
 def main():
