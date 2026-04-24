@@ -11,6 +11,10 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 import os
 
+# Constants
+EMBEDDING_MODEL = "models/gemini-embedding-001"
+CHAT_MODEL = "gemini-2.5-flash"
+
 os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
@@ -49,7 +53,6 @@ def get_conversation_chain(model_name="gemini-2.5-flash", temp=0.4):
     model = ChatGoogleGenerativeAI(model=model_name, temperature=temp)
     prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
     
-    # Using LCEL (LangChain Expression Language) - modern approach for LangChain 0.2+
     chain = (
         {"context": lambda x: x["input_documents"], "question": lambda x: x["question"]}
         | prompt
@@ -76,7 +79,6 @@ def process_question(question):
 
     chain = get_conversation_chain()
 
-    # Using invoke() instead of deprecated __call__ method
     response = chain.invoke({"input_documents": found_text, "question": question})
 
     if response and response.strip():
