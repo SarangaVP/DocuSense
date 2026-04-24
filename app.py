@@ -37,11 +37,11 @@ def get_text_chunks(text):
     return chunks
 
 def get_vectorstore(chunks):
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+    embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
     vector_store = FAISS.from_texts(chunks, embedding=embeddings)
     vector_store.save_local("faiss_index")
 
-def get_conversation_chain(model_name="gemini-2.5-flash", temp=0.4):
+def get_conversation_chain(model_name=CHAT_MODEL, temp=0.4):
     prompt_template = """
     Based on the context, provide a detailed answer. Avoid assumptions or incorrect information.
 
@@ -70,7 +70,7 @@ def process_question(question):
         st.error("Please upload and process PDF files first before asking questions.")
         return
     
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+    embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
     db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization = True)
     found_text = db.similarity_search(question)
     
